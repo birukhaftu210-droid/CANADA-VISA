@@ -5,21 +5,24 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from flask import Flask
 from threading import Thread
 
-# ሎግ ማዋቀር (ስህተቶችን ለመከታተል)
+# ሎግ ማዋቀር
 logging.basicConfig(level=logging.INFO)
 
-# ከአካባቢ ተለዋዋጮች (Environment Variables) እሴቶችን ማንበብ
+# ከአካባቢ ተለዋዋጮች እሴቶችን ማንበብ
 TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 CHANNEL = os.environ.get("CHANNEL", "@xpwork2")
 REGISTER_URL = os.environ.get("REGISTER_URL", "https://t.me/OSCAR_Q15")
 FORCE_JOIN = os.environ.get("FORCE_JOIN", "True").lower() == "true"
 
-# ቶከን እና አድሚን አይዲ ካልተገኙ ቦቱ አይነሳም
 if not TOKEN or not ADMIN_ID:
     raise ValueError("BOT_TOKEN እና ADMIN_ID በRender ላይ በEnvironment Variables ውስጥ መገኘት አለባቸው")
 
 bot = telebot.TeleBot(TOKEN)
+
+# 📌 እዚህ ላይ የፎቶዎቹን File ID ያስገቡ (ከላይ ባለው ዘዴ በመጠቀም አግኝተው እዚህ ይለጥፉ)
+JOB_SECTORS_PHOTO = "AgACAgIAAxkBAAE..."  # 📑የስራ ዘርፎች ፎቶ ID
+BUSINESS_LICENSE_PHOTO = "AgACAgIAAxkBAAE..."  # 🗂የንግድ ፍቃድ ፎቶ ID
 
 bot_settings = {
     "force_join": FORCE_JOIN,
@@ -46,51 +49,61 @@ def is_user_joined(user_id):
         logging.warning(f"የአባልነት ማረጋገጫ አልተሳካም ለ {user_id}: {e}")
         return False
 
+def send_join_prompt(chat_id):
+    keyboard = InlineKeyboardMarkup()
+    join_btn = InlineKeyboardButton("ቻናሉን ለመቀላቀል", url=f"https://t.me/{bot_settings['channel'].replace('@', '')}")
+    check_btn = InlineKeyboardButton("ቼክ አድርግ", callback_data="check_join")
+    keyboard.add(join_btn, check_btn)
+    bot.send_message(
+        chat_id,
+        f"ቦቱን ለመጠቀም መጀመሪያ የኛን ቻናል መቀላቀል አለብዎት: {bot_settings['channel']}",
+        reply_markup=keyboard
+    )
+
+def get_main_keyboard():
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+    keyboard.add(KeyboardButton("📝 ለመመዝገብ"))
+    keyboard.add(KeyboardButton("📑የስራ ዘርፎች"), KeyboardButton("🗂የንግድ ፍቃድ"))
+    return keyboard
+
 @bot.message_handler(commands=['start'])
 def start_command(message):
     user_id = message.from_user.id
     if is_user_joined(user_id):
-        # 🔽 ከታች የሚታይ ቁልፍ (one_time_keyboard=False) ስለሆነ አይጠፋም!
-        keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-        keyboard.add(KeyboardButton("📝 ለመመዝገብ"))
-        
+        keyboard = get_main_keyboard()
         bot.send_message(
             message.chat.id,
-            "እንኳን ደህና መጡ!✅ ለመመዝገብ ከታች ያለውን ቁልፍ ይጫኑ👇👇",
+            "እንኳን ደህና መጡ! ከታች ካሉት ቁልፎች የሚፈልጉትን ይምረጡ።",
             reply_markup=keyboard
         )
     else:
-        # ቻናል መቀላቀል ዩአርኤል ስለሚፈልግ እዚህ ግን ኢንላይን (Inline) መጠቀም አለብን
-        keyboard = InlineKeyboardMarkup()
-        join_btn = InlineKeyboardButton("ቻናሉን ለመቀላቀል", url=f"https://t.me/{bot_settings['channel'].replace('@', '')}")
-        check_btn = InlineKeyboardButton("ቼክ አድርግ", callback_data="check_join")
-        keyboard.add(join_btn, check_btn)
-        bot.send_message(
-            message.chat.id,
-            f"ቦቱን ለመጠቀም መጀመሪያ የኛን ቻናል መቀላቀል አለብዎት: {bot_settings['channel']}",
-            reply_markup=keyboard
-        )
+        send_join_prompt(message.chat.id)
 
-# 🔽 ከታች ያለውን "ለመመዝገብ" ቁልፍ ሲጫኑ ቦቱ መልስ የሚሰጥበት ክፍል
 @bot.message_handler(func=lambda message: message.text == "📝 ለመመዝገብ")
 def handle_register_button(message):
-    user_id = message.from_user.id
-    if is_user_joined(user_id):
+    if is_user_joined(message.from_user.id):
         bot.send_message(
             message.chat.id,
-            f"ለመመዝገብ INBOX📨 ያናግሩን 👇👇\n\n{REGISTER_URL}"
+            f"ለመመዝገብ እባክዎ ይህንን አገናኝ ይጫኑ:\n\n{REGISTER_URL}"
         )
     else:
-        # ካልተቀላቀሉ እንደገና ቻናሉን እንዲቀላቀሉ እንጠይቃለን
-        keyboard = InlineKeyboardMarkup()
-        join_btn = InlineKeyboardButton("ቻናሉን ለመቀላቀል", url=f"https://t.me/{bot_settings['channel'].replace('@', '')}")
-        check_btn = InlineKeyboardButton("ቼክ አድርግ", callback_data="check_join")
-        keyboard.add(join_btn, check_btn)
-        bot.send_message(
-            message.chat.id,
-            f"ቦቱን ለመጠቀም መጀመሪያ የኛን ቻናል መቀላቀል አለብዎት: {bot_settings['channel']}",
-            reply_markup=keyboard
-        )
+        send_join_prompt(message.chat.id)
+
+@bot.message_handler(func=lambda message: message.text == "📑የስራ ዘርፎች")
+def handle_job_sectors(message):
+    if is_user_joined(message.from_user.id):
+        # 📌 እዚህ ላይ ያስቀመጥነውን File ID ይጠቀማል
+        bot.send_photo(message.chat.id, photo=JOB_SECTORS_PHOTO, caption="📑 የስራ ዘርፎች ዝርዝር ፎቶ")
+    else:
+        send_join_prompt(message.chat.id)
+
+@bot.message_handler(func=lambda message: message.text == "🗂የንግድ ፍቃድ")
+def handle_business_license(message):
+    if is_user_joined(message.from_user.id):
+        # 📌 እዚህ ላይ ያስቀመጥነውን File ID ይጠቀማል
+        bot.send_photo(message.chat.id, photo=BUSINESS_LICENSE_PHOTO, caption="🗂 የንግድ ፍቃድ ፎቶ")
+    else:
+        send_join_prompt(message.chat.id)
 
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
@@ -119,14 +132,12 @@ def handle_query(call):
     if call.data == "check_join":
         if is_user_joined(user_id):
             bot.answer_callback_query(call.id, "✅ እናመሰግናለን! ተረጋግጧል።")
-            # 🔽 ከታች የሚታይ ቁልፍ (one_time_keyboard=False) ስለሆነ አይጠፋም!
-            keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-            keyboard.add(KeyboardButton("📝 ለመመዝገብ"))
+            keyboard = get_main_keyboard()
             try:
                 bot.edit_message_text(
                     chat_id=call.message.chat.id,
                     message_id=call.message.message_id,
-                    text="🎉 ስኬታማ! አሁን ከታች ያለውን ቁልፍ ተጭነው መመዝገብ ይችላሉ።",
+                    text="🎉 ስኬታማ! አሁን ከታች ያለውን ቁልፎች ተጭነው መጠቀም ይችላሉ።",
                     reply_markup=keyboard
                 )
             except Exception as e:
@@ -169,9 +180,7 @@ def update_admin_msg(message):
         pass
 
 if __name__ == '__main__':
-    # የFlask አገልጋይ በጀርባ (Thread) ላይ ማስነሳት
     server_thread = Thread(target=run_flask)
     server_thread.start()
-    
     print("ቦቱ በተሳካ ሁኔታ ስራ ጀምሯል...")
     bot.infinity_polling()
