@@ -50,13 +50,13 @@ def is_user_joined(user_id):
 def start_command(message):
     user_id = message.from_user.id
     if is_user_joined(user_id):
-        # 🔽 ኢንላይን ሳይሆን ከታች የሚታይ መደበኛ ቁልፍ (ReplyKeyboardMarkup)
-        keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        # 🔽 ከታች የሚታይ ቁልፍ (one_time_keyboard=False) ስለሆነ አይጠፋም!
+        keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
         keyboard.add(KeyboardButton("📝 ለመመዝገብ"))
         
         bot.send_message(
             message.chat.id,
-            "እንኳን ደህና መጡ! ለመመዝገብ ከታች ያለውን የሚለውን ቁልፍ ይጫኑ⬇️⬇️",
+            "እንኳን ደህና መጡ!✅ ለመመዝገብ ከታች ያለውን ቁልፍ ይጫኑ👇👇",
             reply_markup=keyboard
         )
     else:
@@ -78,7 +78,7 @@ def handle_register_button(message):
     if is_user_joined(user_id):
         bot.send_message(
             message.chat.id,
-            f"🟢 እባክዎ ለመመዝገብ 👇👇 ማናገር ይችላሉ ! :\n\n{REGISTER_URL}"
+            f"ለመመዝገብ INBOX📨 ያናግሩን 👇👇\n\n{REGISTER_URL}"
         )
     else:
         # ካልተቀላቀሉ እንደገና ቻናሉን እንዲቀላቀሉ እንጠይቃለን
@@ -119,8 +119,8 @@ def handle_query(call):
     if call.data == "check_join":
         if is_user_joined(user_id):
             bot.answer_callback_query(call.id, "✅ እናመሰግናለን! ተረጋግጧል።")
-            # ቼክ አድርገው ከተሳካ በኋላ የምዝገባ ቁልፉን እናሳያለን
-            keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            # 🔽 ከታች የሚታይ ቁልፍ (one_time_keyboard=False) ስለሆነ አይጠፋም!
+            keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
             keyboard.add(KeyboardButton("📝 ለመመዝገብ"))
             try:
                 bot.edit_message_text(
