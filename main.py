@@ -1,23 +1,23 @@
 import os
 import logging
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from flask import Flask, request
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from flask import Flask
 from threading import Thread
 
-# ሎግ ማዋቀር
+# ሎግ ማዋቀር (ስህተቶችን ለመከታተል)
 logging.basicConfig(level=logging.INFO)
 
-# ከአካባቢ ተለዋዋጮች እሴቶችን ማንበብ
+# ከአካባቢ ተለዋዋጮች (Environment Variables) እሴቶችን ማንበብ
 TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 CHANNEL = os.environ.get("CHANNEL", "@xpwork2")
 REGISTER_URL = os.environ.get("REGISTER_URL", "https://t.me/OSCAR_Q15")
 FORCE_JOIN = os.environ.get("FORCE_JOIN", "True").lower() == "true"
 
-# ቶከን እና አድሚን አይዲ ካልተገኙ ይቆም
+# ቶከን እና አድሚን አይዲ ካልተገኙ ቦቱ አይነሳም
 if not TOKEN or not ADMIN_ID:
-    raise ValueError("BOT_TOKEN እና ADMIN_ID በአካባቢ ተለዋዋጮች ውስጥ መገኘት አለባቸው")
+    raise ValueError("BOT_TOKEN እና ADMIN_ID በRender ላይ በEnvironment Variables ውስጥ መገኘት አለባቸው")
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -30,7 +30,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot is running!"
+    return "ቦቱ በሰላም እየሰራ ነው!"
 
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
@@ -50,19 +50,40 @@ def is_user_joined(user_id):
 def start_command(message):
     user_id = message.from_user.id
     if is_user_joined(user_id):
-        keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton("ለመመዝገብ እዚህ ይጫኑ", url=REGISTER_URL))
+        # 🔽 ኢንላይን ሳይሆን ከታች የሚታይ መደበኛ ቁልፍ (ReplyKeyboardMarkup)
+        keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        keyboard.add(KeyboardButton("📝 ለመመዝገብ"))
+        
         bot.send_message(
             message.chat.id,
-            "እንኳን ደህና መጡ! ለመመዝገብ ከታች ያለውን ቁልፍ ተጭነው ያናግሩ።",
+            "እንኳን ደህና መጡ! ለመመዝገብ ከታች ያለውን '📝 ለመመዝገብ' የሚለውን ቁልፍ ይጫኑ።",
             reply_markup=keyboard
         )
     else:
+        # ቻናል መቀላቀል ዩአርኤል ስለሚፈልግ እዚህ ግን ኢንላይን (Inline) መጠቀም አለብን
         keyboard = InlineKeyboardMarkup()
-        join_btn = InlineKeyboardButton(
-            "ቻናሉን ለመቀላቀል",
-            url=f"https://t.me/{bot_settings['channel'].replace('@', '')}"
+        join_btn = InlineKeyboardButton("ቻናሉን ለመቀላቀል", url=f"https://t.me/{bot_settings['channel'].replace('@', '')}")
+        check_btn = InlineKeyboardButton("ቼክ አድርግ", callback_data="check_join")
+        keyboard.add(join_btn, check_btn)
+        bot.send_message(
+            message.chat.id,
+            f"ቦቱን ለመጠቀም መጀመሪያ የኛን ቻናል መቀላቀል አለብዎት: {bot_settings['channel']}",
+            reply_markup=keyboard
         )
+
+# 🔽 ከታች ያለውን "ለመመዝገብ" ቁልፍ ሲጫኑ ቦቱ መልስ የሚሰጥበት ክፍል
+@bot.message_handler(func=lambda message: message.text == "📝 ለመመዝገብ")
+def handle_register_button(message):
+    user_id = message.from_user.id
+    if is_user_joined(user_id):
+        bot.send_message(
+            message.chat.id,
+            f"ለመመዝገብ እባክዎ ይህንን አገናኝ ይጫኑ:\n\n{REGISTER_URL}"
+        )
+    else:
+        # ካልተቀላቀሉ እንደገና ቻናሉን እንዲቀላቀሉ እንጠይቃለን
+        keyboard = InlineKeyboardMarkup()
+        join_btn = InlineKeyboardButton("ቻናሉን ለመቀላቀል", url=f"https://t.me/{bot_settings['channel'].replace('@', '')}")
         check_btn = InlineKeyboardButton("ቼክ አድርግ", callback_data="check_join")
         keyboard.add(join_btn, check_btn)
         bot.send_message(
@@ -98,13 +119,14 @@ def handle_query(call):
     if call.data == "check_join":
         if is_user_joined(user_id):
             bot.answer_callback_query(call.id, "✅ እናመሰግናለን! ተረጋግጧል።")
-            keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton("ለመመዝገብ እዚህ ይጫኑ", url=REGISTER_URL))
+            # ቼክ አድርገው ከተሳካ በኋላ የምዝገባ ቁልፉን እናሳያለን
+            keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            keyboard.add(KeyboardButton("📝 ለመመዝገብ"))
             try:
                 bot.edit_message_text(
                     chat_id=call.message.chat.id,
                     message_id=call.message.message_id,
-                    text="🎉 ስኬታማ! አሁን መመዝገብ ይችላሉ።",
+                    text="🎉 ስኬታማ! አሁን ከታች ያለውን ቁልፍ ተጭነው መመዝገብ ይችላሉ።",
                     reply_markup=keyboard
                 )
             except Exception as e:
@@ -147,7 +169,7 @@ def update_admin_msg(message):
         pass
 
 if __name__ == '__main__':
-    # የFlask አገልጋይ በThread ላይ ማስነሳት
+    # የFlask አገልጋይ በጀርባ (Thread) ላይ ማስነሳት
     server_thread = Thread(target=run_flask)
     server_thread.start()
     
