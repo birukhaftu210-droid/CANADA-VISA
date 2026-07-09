@@ -25,7 +25,7 @@ def run_flask():
 # የቦቱ Settings
 bot_settings = {
     "force_join": True,
-    "channel": "@OSCAR_Q15"
+    "channel": "@xpwork2"
 }
 
 def is_user_joined(user_id):
