@@ -8,7 +8,7 @@ from threading import Thread
 # ሎግ ማዋቀር
 logging.basicConfig(level=logging.INFO)
 
-# ከአካባቢ ተለዋዋጮች እሴቶችን ማንበብ
+# ከአካባቢ ተለዋዋጮች (Environment Variables) እሴቶችን ማንበብ
 TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 CHANNEL = os.environ.get("CHANNEL", "@xpwork2")
@@ -20,9 +20,14 @@ if not TOKEN or not ADMIN_ID:
 
 bot = telebot.TeleBot(TOKEN)
 
-# 📌 እዚህ ላይ የፎቶዎቹን File ID ያስገቡ (ከላይ ባለው ዘዴ በመጠቀም አግኝተው እዚህ ይለጥፉ)
-JOB_SECTORS_PHOTO = "AgACAgIAAxkBAAE..."  # 📑የስራ ዘርፎች ፎቶ ID
-BUSINESS_LICENSE_PHOTO = "AgACAgIAAxkBAAE..."  # 🗂የንግድ ፍቃድ ፎቶ ID
+# 📌 እዚህ ላይ የፎቶዎቹን File ID ያስገቡ (ከላይ ባለው ዘዴ አግኝተው እዚህ ይለጥፉ)
+JOB_SECTORS_PHOTO = "AgACAgIAAxkBAAE..."  # 📑 የስራ ዘርፎች ፎቶ ID
+BUSINESS_LICENSE_PHOTO = "AgACAgIAAxkBAAE..."  # 🗂 የንግድ ፍቃድ ፎቶ ID
+
+# 🔽 የቁልፎቹ ስሞችን በተለዋዋጮች እንደገና አዋቅሬያለሁ (ትክክለኛ ክፍት ቦታዎችን ይይዛሉ)
+BTN_REGISTER = "📝 ለመመዝገብ"
+BTN_JOB_SECTORS = "📑 የስራ ዘርፎች"
+BTN_BUSINESS_LICENSE = "🗂 የንግድ ፍቃድ"
 
 bot_settings = {
     "force_join": FORCE_JOIN,
@@ -60,10 +65,11 @@ def send_join_prompt(chat_id):
         reply_markup=keyboard
     )
 
+# 🔽 እዚህ ላይ ቁልፎቹን በ BTN_... ተለዋዋጮች እየጠቀምኩ አዘጋጅቻለሁ
 def get_main_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-    keyboard.add(KeyboardButton("📝 ለመመዝገብ"))
-    keyboard.add(KeyboardButton("📑የስራ ዘርፎች"), KeyboardButton("🗂የንግድ ፍቃድ"))
+    keyboard.add(KeyboardButton(BTN_REGISTER))
+    keyboard.add(KeyboardButton(BTN_JOB_SECTORS), KeyboardButton(BTN_BUSINESS_LICENSE))
     return keyboard
 
 @bot.message_handler(commands=['start'])
@@ -79,7 +85,8 @@ def start_command(message):
     else:
         send_join_prompt(message.chat.id)
 
-@bot.message_handler(func=lambda message: message.text == "📝 ለመመዝገብ")
+# 🔽 ከዚህ በታች ያሉት አስተናጋጆች በ BTN_... ተለዋዋጮች ትክክለኛውን ፊደል ይጠብቃሉ
+@bot.message_handler(func=lambda message: message.text == BTN_REGISTER)
 def handle_register_button(message):
     if is_user_joined(message.from_user.id):
         bot.send_message(
@@ -89,21 +96,25 @@ def handle_register_button(message):
     else:
         send_join_prompt(message.chat.id)
 
-@bot.message_handler(func=lambda message: message.text == "📑የስራ ዘርፎች")
+@bot.message_handler(func=lambda message: message.text == BTN_JOB_SECTORS)
 def handle_job_sectors(message):
     if is_user_joined(message.from_user.id):
-        # 📌 እዚህ ላይ ያስቀመጥነውን File ID ይጠቀማል
         bot.send_photo(message.chat.id, photo=JOB_SECTORS_PHOTO, caption="📑 የስራ ዘርፎች ዝርዝር ፎቶ")
     else:
         send_join_prompt(message.chat.id)
 
-@bot.message_handler(func=lambda message: message.text == "🗂የንግድ ፍቃድ")
+@bot.message_handler(func=lambda message: message.text == BTN_BUSINESS_LICENSE)
 def handle_business_license(message):
     if is_user_joined(message.from_user.id):
-        # 📌 እዚህ ላይ ያስቀመጥነውን File ID ይጠቀማል
         bot.send_photo(message.chat.id, photo=BUSINESS_LICENSE_PHOTO, caption="🗂 የንግድ ፍቃድ ፎቶ")
     else:
         send_join_prompt(message.chat.id)
+
+# 📸 (አማራጭ) ፎቶ ሲልኩ File ID ለማግኘት ከፈለጉ ይህንን መተው ይችላሉ
+@bot.message_handler(content_types=['photo'])
+def get_photo_id(message):
+    file_id = message.photo[-1].file_id
+    bot.reply_to(message, f"📸 የፎቶው File ID እነሆ:\n\n`{file_id}`", parse_mode="Markdown")
 
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
