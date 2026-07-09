@@ -18,10 +18,9 @@ if not TOKEN or not ADMIN_ID:
 
 bot = telebot.TeleBot(TOKEN)
 
-# 📌 እዚህ ላይ File ID ያስገቡ (ከ @FileIDBot ካገኙት በኋላ ይቀይሩ)
-# ካላስገቡት በምትኩ የጽሑፍ መልእክት ይልካል (Bot አይወድቅም)
-JOB_SECTORS_PHOTO = AgACAgQAAxkBAAOmak_-PF-5K-MjwCGPNrmCChM3msIAAukOaxu0OnlSq2jAWcYmQVsBAAMCAAN5AAM8BA  
-BUSINESS_LICENSE_PHOTO = AgACAgQAAxkBAAOqak__ijT2ZJnPECCzXgrRi6Nl6M8AAuwOaxu0OnlSoySaMzAyKLUBAAMCAAN4AAM8BA 
+# 📌 አስተካክለነዋል: የፎቶ አይዲዎቹ አሁን በ" " (ኮማ) ውስጥ ገብተዋል!
+JOB_SECTORS_PHOTO = "AgACAgQAAxkBAAOmak_-PF-5K-MjwCGPNrmCChM3msIAAukOaxu0OnlSq2jAWcYmQVsBAAMCAAN5AAM8BA"
+BUSINESS_LICENSE_PHOTO = "AgACAgQAAxkBAAOqak__ijT2ZJnPECCzXgrRi6Nl6M8AAuwOaxu0OnlSoySaMzAyKLUBAAMCAAN4AAM8BA"
 
 BTN_REGISTER = "📝 ለመመዝገብ"
 BTN_JOB_SECTORS = "📑 የስራ ዘርፎች"
@@ -74,7 +73,7 @@ def handle_register(m):
     else:
         send_join_prompt(m.chat.id)
 
-# 🔽 ፎቶ ካልተጫነ እንኳን ይህ ክፍል ቦቱ እንዳይወድቅ ይከላከላል
+# 🔽 ፎቶ ካልተጫነ እንኳን ቦቱ እንዳይወድቅ የሚከላከል ክፍል
 @bot.message_handler(func=lambda m: m.text == BTN_JOB_SECTORS)
 def handle_job_sectors(m):
     if not is_user_joined(m.from_user.id):
@@ -83,7 +82,7 @@ def handle_job_sectors(m):
         if JOB_SECTORS_PHOTO:
             bot.send_photo(m.chat.id, photo=JOB_SECTORS_PHOTO, caption="📑 የስራ ዘርፎች ዝርዝር")
         else:
-            bot.send_message(m.chat.id, "📑 የስራ ዘርፎች ፎቶ አልተጫነም። በቅርቡ ይለቀቃል!")
+            bot.send_message(m.chat.id, "📑 የስራ ዘርፎች ፎቶ አልተጫነም።")
     except Exception as e:
         bot.send_message(m.chat.id, "ፎቶውን በማውጣት ላይ ችግር ተፈጥሯል።")
         logging.error(f"Job photo error: {e}")
@@ -96,12 +95,12 @@ def handle_business_license(m):
         if BUSINESS_LICENSE_PHOTO:
             bot.send_photo(m.chat.id, photo=BUSINESS_LICENSE_PHOTO, caption="🗂 የንግድ ፍቃድ")
         else:
-            bot.send_message(m.chat.id, "🗂 የንግድ ፍቃድ ፎቶ አልተጫነም። በቅርቡ ይለቀቃል!")
+            bot.send_message(m.chat.id, "🗂 የንግድ ፍቃድ ፎቶ አልተጫነም።")
     except Exception as e:
         bot.send_message(m.chat.id, "ፎቶውን በማውጣት ላይ ችግር ተፈጥሯል።")
         logging.error(f"License photo error: {e}")
 
-# 📸 በዚህ ኮድ አማካኝነት ፎቶውን ወደ ቦትዎ ብትልኩ File ID ይመልስልዎታል
+# 📸 ይህ ክፍል: ፎቶ ወደ ቦቱ ሲልኩ File ID ን ይመልስልዎታል
 @bot.message_handler(content_types=['photo'])
 def get_photo_id(message):
     file_id = message.photo[-1].file_id
@@ -142,5 +141,5 @@ def handle_query(call):
 
 if __name__ == '__main__':
     Thread(target=run_flask).start()
-    print("ጀምሯል...")
+    print("ቦቱ እየሰራ ነው...")
     bot.infinity_polling()
