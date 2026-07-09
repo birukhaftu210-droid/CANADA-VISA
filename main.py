@@ -50,7 +50,7 @@ def send_join_prompt(chat_id):
         InlineKeyboardButton("ግሩፑን ለመቀላቀል", url=f"https://t.me/{bot_settings['channel'].replace('@', '')}"),
         InlineKeyboardButton("ቼክ አድርግ", callback_data="check_join")
     )
-    bot.send_message(chat_id, f"መጀመሪያ ቻናሉን ይቀላቀሉ ከዛ ቼክ አድርግ ይንኩ", reply_markup=keyboard)
+    bot.send_message(chat_id, f"መጀመሪያ ግሩፑን ይቀላቀሉ ከዛ ቼክ አድርግ ይንኩ", reply_markup=keyboard)
 
 def get_main_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
