@@ -18,7 +18,6 @@ if not TOKEN or not ADMIN_ID:
 
 bot = telebot.TeleBot(TOKEN)
 
-# 📌 አስተካክለነዋል: የፎቶ አይዲዎቹ አሁን በ" " (ኮማ) ውስጥ ገብተዋል!
 JOB_SECTORS_PHOTO = "AgACAgQAAxkBAAOmak_-PF-5K-MjwCGPNrmCChM3msIAAukOaxu0OnlSq2jAWcYmQVsBAAMCAAN5AAM8BA"
 BUSINESS_LICENSE_PHOTO = "AgACAgQAAxkBAAOqak__ijT2ZJnPECCzXgrRi6Nl6M8AAuwOaxu0OnlSoySaMzAyKLUBAAMCAAN4AAM8BA"
 
@@ -48,10 +47,10 @@ def is_user_joined(user_id):
 def send_join_prompt(chat_id):
     keyboard = InlineKeyboardMarkup()
     keyboard.add(
-        InlineKeyboardButton("ቻናሉን ለመቀላቀል", url=f"https://t.me/{bot_settings['channel'].replace('@', '')}"),
+        InlineKeyboardButton("ግሩፑን ለመቀላቀል", url=f"https://t.me/{bot_settings['channel'].replace('@', '')}"),
         InlineKeyboardButton("ቼክ አድርግ", callback_data="check_join")
     )
-    bot.send_message(chat_id, f"መጀመሪያ ቻናሉን ቀላቀል: {bot_settings['channel']}", reply_markup=keyboard)
+    bot.send_message(chat_id, f"መጀመሪያ ቻናሉን ይቀላቀሉ ከዛ ቼክ አድርግ ይንኩ", reply_markup=keyboard)
 
 def get_main_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
@@ -73,7 +72,6 @@ def handle_register(m):
     else:
         send_join_prompt(m.chat.id)
 
-# 🔽 ፎቶ ካልተጫነ እንኳን ቦቱ እንዳይወድቅ የሚከላከል ክፍል
 @bot.message_handler(func=lambda m: m.text == BTN_JOB_SECTORS)
 def handle_job_sectors(m):
     if not is_user_joined(m.from_user.id):
@@ -100,7 +98,6 @@ def handle_business_license(m):
         bot.send_message(m.chat.id, "ፎቶውን በማውጣት ላይ ችግር ተፈጥሯል።")
         logging.error(f"License photo error: {e}")
 
-# 📸 ይህ ክፍል: ፎቶ ወደ ቦቱ ሲልኩ File ID ን ይመልስልዎታል
 @bot.message_handler(content_types=['photo'])
 def get_photo_id(message):
     file_id = message.photo[-1].file_id
