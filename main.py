@@ -56,7 +56,7 @@ def start_command(message):
         
         bot.send_message(
             message.chat.id,
-            "እንኳን ደህና መጡ! ለመመዝገብ ከታች ያለውን '📝 ለመመዝገብ' የሚለውን ቁልፍ ይጫኑ።",
+            "እንኳን ደህና መጡ! ለመመዝገብ ከታች ያለውን የሚለውን ቁልፍ ይጫኑ⬇️⬇️",
             reply_markup=keyboard
         )
     else:
@@ -78,7 +78,7 @@ def handle_register_button(message):
     if is_user_joined(user_id):
         bot.send_message(
             message.chat.id,
-            f"ለመመዝገብ እባክዎ ይህንን አገናኝ ይጫኑ:\n\n{REGISTER_URL}"
+            f"🟢 እባክዎ ለመመዝገብ 👇👇 ማናገር ይችላሉ ! :\n\n{REGISTER_URL}"
         )
     else:
         # ካልተቀላቀሉ እንደገና ቻናሉን እንዲቀላቀሉ እንጠይቃለን
