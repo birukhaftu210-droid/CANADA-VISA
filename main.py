@@ -67,14 +67,14 @@ def get_main_keyboard():
 @bot.message_handler(commands=['start'])
 def start_command(message):
     if is_user_joined(message.from_user.id):
-        bot.send_message(message.chat.id, "እንኳን ደህና መጡ! ቁልፎቹን ይጫኑ።", reply_markup=get_main_keyboard())
+        bot.send_message(message.chat.id, "🎉 እንኳን ወደ ብሩህ ተሰፋ በሰላም መጡ!🟢 አገልግሎትችንን ይጠቀሙ⬇️⬇️", reply_markup=get_main_keyboard())
     else:
         send_join_prompt(message.chat.id)
 
 @bot.message_handler(func=lambda m: m.text == BTN_REGISTER)
 def handle_register(m):
     if is_user_joined(m.from_user.id):
-        bot.send_message(m.chat.id, f"ለመመዝገብ ይህን ይጫኑ:\n\n{REGISTER_URL}")
+        bot.send_message(m.chat.id, f"ለመመዝገብ INBOX📨 ያናግሩን👇👇:\n\n{REGISTER_URL}")
     else:
         send_join_prompt(m.chat.id)
 
@@ -85,7 +85,7 @@ def handle_job_sectors(m):
         return
     try:
         if JOB_SECTORS_PHOTO:
-            bot.send_photo(m.chat.id, photo=JOB_SECTORS_PHOTO, caption="📑 የስራ ዘርፎች ዝርዝር")
+            bot.send_photo(m.chat.id, photo=JOB_SECTORS_PHOTO, caption="የስራ ዘርፎች")
         else:
             bot.send_message(m.chat.id, "📑 የስራ ዘርፎች ፎቶ አልተጫነም።")
     except Exception as e:
@@ -99,17 +99,12 @@ def handle_business_license(m):
         return
     try:
         if BUSINESS_LICENSE_PHOTO:
-            bot.send_photo(m.chat.id, photo=BUSINESS_LICENSE_PHOTO, caption="🗂 የንግድ ፍቃድ")
+            bot.send_photo(m.chat.id, photo=BUSINESS_LICENSE_PHOTO, caption="የንግድ ፍቃድ")
         else:
             bot.send_message(m.chat.id, "🗂 የንግድ ፍቃድ ፎቶ አልተጫነም።")
     except Exception as e:
         bot.send_message(m.chat.id, "ፎቶውን በማውጣት ላይ ችግር ተፈጥሯል።")
         logging.error(f"License photo error: {e}")
-
-@bot.message_handler(content_types=['photo'])
-def get_photo_id(message):
-    file_id = message.photo[-1].file_id
-    bot.reply_to(message, f"✅ የፎቶው File ID እነሆ:\n\n`{file_id}`", parse_mode="Markdown")
     
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
@@ -134,7 +129,7 @@ def handle_query(call):
             except Exception as e:
                 logging.warning(f"መልእክት ማጥፋት አልተሳካም: {e}")
             # አዲስ መልእክት ከመደበኛው Reply ኪቦርድ ጋር ላክ
-            bot.send_message(call.message.chat.id, "🎉 ስኬታማ! ከታች ያሉትን ቁልፎች ይጫኑ።", reply_markup=get_main_keyboard())
+            bot.send_message(call.message.chat.id, "🎉 እንኳን ወደ ብሩህ ተሰፋ በሰላም መጡ!🟢 አገልግሎትችንን ይጠቀሙ⬇️⬇️", reply_markup=get_main_keyboard())
         else:
             bot.answer_callback_query(call.id, "❌ አልተቀላቀሉም!", show_alert=True)
     elif call.data == "admin_add_fj" and call.from_user.id == ADMIN_ID:
