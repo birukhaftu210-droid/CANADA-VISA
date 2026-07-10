@@ -67,8 +67,7 @@ def get_main_keyboard():
 @bot.message_handler(commands=['start'])
 def start_command(message):
     if is_user_joined(message.from_user.id):
-        bot.send_message(message.chat.id, "🎉 እንኳን ወደ ብሩህ ተሰፋ በሰላም መጡ!
-        🟢 አገልግሎትችንን ይጠቀሙ⬇️⬇️", reply_markup=get_main_keyboard())
+        bot.send_message(message.chat.id, "🎉 እንኳን ወደ ብሩህ ተሰፋ በሰላም መጡ!🟢 አገልግሎትችንን ይጠቀሙ⬇️⬇️", reply_markup=get_main_keyboard())
     else:
         send_join_prompt(message.chat.id)
 
