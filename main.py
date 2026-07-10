@@ -98,11 +98,6 @@ def handle_business_license(m):
         bot.send_message(m.chat.id, "ፎቶውን በማውጣት ላይ ችግር ተፈጥሯል።")
         logging.error(f"License photo error: {e}")
 
-@bot.message_handler(content_types=['photo'])
-def get_photo_id(message):
-    file_id = message.photo[-1].file_id
-    bot.reply_to(message, f"✅ የፎቶው File ID እነሆ:\n\n`{file_id}`", parse_mode="Markdown")
-
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
     if message.from_user.id != ADMIN_ID:
