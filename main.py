@@ -13,30 +13,36 @@ CHANNEL = os.environ.get("CHANNEL", "@xpwork2")
 REGISTER_URL = os.environ.get("REGISTER_URL", "https://t.me/OSCAR_Q15")
 FORCE_JOIN = os.environ.get("FORCE_JOIN", "True").lower() == "true"
 
+# የፎቶ ፋይል መታወቂያዎች ከ Environment Variables ያግኙ፤ ከሌሉ ነባሪ ይጠቀሙ
+# ምስሎቹን ለቦቱ አስተላልፈው የተገኘውን file_id በእነዚህ ተለዋዋጮች ውስጥ ያስቀምጡ
+JOB_SECTORS_PHOTO = os.environ.get("JOB_SECTORS_PHOTO", "AgACAgQAAxkBAAOmak_-PF-5K-MjwCGPNrmCChM3msIAAukOaxu0OnlSq2jAWcYmQVsBAAMCAAN5AAM8BA")
+BUSINESS_LICENSE_PHOTO = os.environ.get("BUSINESS_LICENSE_PHOTO", "AgACAgQAAxkBAAOqak__ijT2ZJnPECCzXgrRi6Nl6M8AAuwOaxu0OnlSoySaMzAyKLUBAAMCAAN4AAM8BA")
+
 if not TOKEN or not ADMIN_ID:
     raise ValueError("BOT_TOKEN እና ADMIN_ID በEnvironment Variables ውስጥ መገኘት አለባቸው")
 
 bot = telebot.TeleBot(TOKEN)
 
-JOB_SECTORS_PHOTO = "AgACAgQAAxkBAAOmak_-PF-5K-MjwCGPNrmCChM3msIAAukOaxu0OnlSq2jAWcYmQVsBAAMCAAN5AAM8BA"
-BUSINESS_LICENSE_PHOTO = "AgACAgQAAxkBAAOqak__ijT2ZJnPECCzXgrRi6Nl6M8AAuwOaxu0OnlSoySaMzAyKLUBAAMCAAN4AAM8BA"
-
 BTN_REGISTER = "📝 ለመመዝገብ"
 BTN_JOB_SECTORS = "📑 የስራ ዘርፎች"
 BTN_BUSINESS_LICENSE = "🗂 የንግድ ፍቃድ"
 
+# Force Join ማብሪያ / ማጥፊያ (በማህደረ ትውስታ ብቻ ይቀመጣል፤ ቦቱ ሲቋረጥ ዳግም ይጀምራል)
 bot_settings = {"force_join": FORCE_JOIN, "channel": CHANNEL}
+
 app = Flask(__name__)
 
 @app.route('/')
-def home(): return "ቦቱ እየሰራ ነው!"
+def home():
+    return "ቦቱ እየሰራ ነው!"
 
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
 def is_user_joined(user_id):
-    if not bot_settings["force_join"]: return True
+    if not bot_settings["force_join"]:
+        return True
     try:
         member = bot.get_chat_member(bot_settings["channel"], user_id)
         return member.status in ['member', 'administrator', 'creator']
@@ -75,7 +81,8 @@ def handle_register(m):
 @bot.message_handler(func=lambda m: m.text == BTN_JOB_SECTORS)
 def handle_job_sectors(m):
     if not is_user_joined(m.from_user.id):
-        send_join_prompt(m.chat.id); return
+        send_join_prompt(m.chat.id)
+        return
     try:
         if JOB_SECTORS_PHOTO:
             bot.send_photo(m.chat.id, photo=JOB_SECTORS_PHOTO, caption="📑 የስራ ዘርፎች ዝርዝር")
@@ -88,7 +95,8 @@ def handle_job_sectors(m):
 @bot.message_handler(func=lambda m: m.text == BTN_BUSINESS_LICENSE)
 def handle_business_license(m):
     if not is_user_joined(m.from_user.id):
-        send_join_prompt(m.chat.id); return
+        send_join_prompt(m.chat.id)
+        return
     try:
         if BUSINESS_LICENSE_PHOTO:
             bot.send_photo(m.chat.id, photo=BUSINESS_LICENSE_PHOTO, caption="🗂 የንግድ ፍቃድ")
@@ -104,7 +112,7 @@ def admin_panel(message):
         bot.send_message(message.chat.id, "❌ አድሚን ብቻ ነው ይህን የሚጠቀም")
         return
     keyboard = InlineKeyboardMarkup(row_width=2)
-    keyboard.add(InlineKeyboardButton("➕ Add ForceJoin", callback_data="admin_add_fj"), 
+    keyboard.add(InlineKeyboardButton("➕ Add ForceJoin", callback_data="admin_add_fj"),
                  InlineKeyboardButton("➖ Remove ForceJoin", callback_data="admin_rem_fj"))
     keyboard.add(InlineKeyboardButton("🗑️ Remove Message", callback_data="admin_rem_msg"))
     status = "✅ በርቷል" if bot_settings["force_join"] else "❌ ጠፍቷል"
@@ -116,9 +124,12 @@ def handle_query(call):
         if is_user_joined(call.from_user.id):
             bot.answer_callback_query(call.id, "✅ ተረጋግጧል!")
             try:
-                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                      text="🎉 ስኬታማ! ከታች ያሉትን ቁልፎች ይጫኑ።", reply_markup=get_main_keyboard())
-            except: pass
+                # የቀድሞውን መልእክት (Inline ኪቦርድ ያለው) ሰርዝ
+                bot.delete_message(call.message.chat.id, call.message.message_id)
+            except Exception as e:
+                logging.warning(f"መልእክት ማጥፋት አልተሳካም: {e}")
+            # አዲስ መልእክት ከመደበኛው Reply ኪቦርድ ጋር ላክ
+            bot.send_message(call.message.chat.id, "🎉 ስኬታማ! ከታች ያሉትን ቁልፎች ይጫኑ።", reply_markup=get_main_keyboard())
         else:
             bot.answer_callback_query(call.id, "❌ አልተቀላቀሉም!", show_alert=True)
     elif call.data == "admin_add_fj" and call.from_user.id == ADMIN_ID:
@@ -128,8 +139,10 @@ def handle_query(call):
         bot_settings["force_join"] = False
         bot.answer_callback_query(call.id, "Force Join ጠፍቷል")
     elif call.data == "admin_rem_msg" and call.from_user.id == ADMIN_ID:
-        try: bot.delete_message(call.message.chat.id, call.message.message_id)
-        except: pass
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except Exception as e:
+            logging.warning(f"መልእክት ማጥፋት አልተሳካም: {e}")
 
 if __name__ == '__main__':
     Thread(target=run_flask).start()
